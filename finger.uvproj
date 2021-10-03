@@ -367,6 +367,11 @@
               <FileType>1</FileType>
               <FilePath>.\eeprom.c</FilePath>
             </File>
+            <File>
+              <FileName>beep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\beep.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

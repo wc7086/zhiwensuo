@@ -1,4 +1,4 @@
-C51 COMPILER V9.57.0.0   AS608                                                             07/07/2021 19:56:52 PAGE 1   
+C51 COMPILER V9.57.0.0   AS608                                                             09/15/2021 12:41:20 PAGE 1   
 
 
 C51 COMPILER V9.57.0.0, COMPILATION OF MODULE AS608
@@ -62,7 +62,7 @@ line level    source
   45   2          if(uart_rx_sta>=10)
   46   2          {
   47   3            delay_ms(10);
-C51 COMPILER V9.57.0.0   AS608                                                             07/07/2021 19:56:52 PAGE 2   
+C51 COMPILER V9.57.0.0   AS608                                                             09/15/2021 12:41:20 PAGE 2   
 
   48   3            break;
   49   3          }
@@ -126,7 +126,7 @@ line level    source
  107          void FPM10A_Cmd_Save_Finger( unsigned int storeID )
  108          {
  109   1             unsigned long temp = 0;
-C51 COMPILER V9.57.0.0   AS608                                                             07/07/2021 19:56:52 PAGE 3   
+C51 COMPILER V9.57.0.0   AS608                                                             09/15/2021 12:41:20 PAGE 3   
 
  110   1             unsigned char i;
  111   1             FPM10A_Save_Finger[5] =(storeID&0xFF00)>>8;
@@ -190,7 +190,7 @@ line level    source
  169   2          FPM10A_Receive_Data();    
  170   2          FPM10A_Cmd_Search_Finger();
  171   2          FPM10A_Receive_Data();      
-C51 COMPILER V9.57.0.0   AS608                                                             07/07/2021 19:56:52 PAGE 4   
+C51 COMPILER V9.57.0.0   AS608                                                             09/15/2021 12:41:20 PAGE 4   
 
  172   2          if(FPM10A_RECEICE_BUFFER[9] == 0) //搜索到  
  173   2          {
@@ -219,42 +219,42 @@ line level    source
  196   1          return 1;
  197   1      }
  198          //删除 flash 数据库中指定 ID 号开始的 N 个指纹模板
- 199          u8 FPM10A_Delete_N_Fingerprint(unsigned int storeID,unsigned int N)
- 200          {
- 201   1        unsigned char i=0;
- 202   1        unsigned long temp = 0;
- 203   1        unsigned char FPM10A_Delete_Finger[10];
- 204   1        FPM10A_Delete_Finger[0]=0x01;
- 205   1        FPM10A_Delete_Finger[1]=0x00;
- 206   1        FPM10A_Delete_Finger[2]=0x07;
- 207   1        FPM10A_Delete_Finger[3]=0x0c;
- 208   1        FPM10A_Delete_Finger[4]=(storeID&0xFF00)>>8;
- 209   1        FPM10A_Delete_Finger[5]=(storeID&0x00FF);
- 210   1        FPM10A_Delete_Finger[6]=(N&0x00FF)>>8;
- 211   1        FPM10A_Delete_Finger[7]=(N&0x00FF);
- 212   1        for(i=0;i<8;i++)   //计算校验和
- 213   1           temp = temp + FPM10A_Delete_Finger[i]; 
- 214   1        FPM10A_Delete_Finger[8]=(temp & 0x00FF00) >> 8; //存放校验数据
- 215   1        FPM10A_Delete_Finger[9]= temp & 0x0000FF; 
- 216   1        
- 217   1        FPM10A_Cmd_Send_Pack_Head();
- 218   1        for(i=0;i<10;i++)
- 219   1          Uart_Send_Byte(FPM10A_Delete_Finger[i]);      //发送命令
- 220   1        
- 221   1        FPM10A_Receive_Data(); 
- 222   1        
- 223   1        if(FPM10A_RECEICE_BUFFER[9] == 0)         //判断数据低第9位是否接收到0
- 224   1        {
- 225   2            return 0;
- 226   2        }
- 227   1        else
- 228   1          return 1;
- 229   1      }
+ 199          //u8 FPM10A_Delete_N_Fingerprint(unsigned int storeID,unsigned int N)
+ 200          //{
+ 201          //  unsigned char i=0;
+ 202          //  unsigned long temp = 0;
+ 203          //  unsigned char FPM10A_Delete_Finger[10];
+ 204          //  FPM10A_Delete_Finger[0]=0x01;
+ 205          //  FPM10A_Delete_Finger[1]=0x00;
+ 206          //  FPM10A_Delete_Finger[2]=0x07;
+ 207          //  FPM10A_Delete_Finger[3]=0x0c;
+ 208          //  FPM10A_Delete_Finger[4]=(storeID&0xFF00)>>8;
+ 209          //  FPM10A_Delete_Finger[5]=(storeID&0x00FF);
+ 210          //  FPM10A_Delete_Finger[6]=(N&0x00FF)>>8;
+ 211          //  FPM10A_Delete_Finger[7]=(N&0x00FF);
+ 212          //  for(i=0;i<8;i++)   //计算校验和
+ 213          //     temp = temp + FPM10A_Delete_Finger[i]; 
+ 214          //  FPM10A_Delete_Finger[8]=(temp & 0x00FF00) >> 8; //存放校验数据
+ 215          //  FPM10A_Delete_Finger[9]= temp & 0x0000FF; 
+ 216          //  
+ 217          //  FPM10A_Cmd_Send_Pack_Head();
+ 218          //  for(i=0;i<10;i++)
+ 219          //    Uart_Send_Byte(FPM10A_Delete_Finger[i]);      //发送命令
+ 220          //  
+ 221          //  FPM10A_Receive_Data(); 
+ 222          //  
+ 223          //  if(FPM10A_RECEICE_BUFFER[9] == 0)         //判断数据低第9位是否接收到0
+ 224          //  {
+ 225          //      return 0;
+ 226          //  }
+ 227          //  else
+ 228          //    return 1;
+ 229          //}
  230          //读取指纹个数
  231          u16 PS_ValidTempleteNum()
  232          {
  233   1        unsigned char i;   
-C51 COMPILER V9.57.0.0   AS608                                                             07/07/2021 19:56:52 PAGE 5   
+C51 COMPILER V9.57.0.0   AS608                                                             09/15/2021 12:41:20 PAGE 5   
 
  234   1        FPM10A_Cmd_Send_Pack_Head(); //发送通信协议包头 
  235   1        for(i=0;i<6;i++)
@@ -318,7 +318,7 @@ line level    source
  293          
  294          
  295          
-C51 COMPILER V9.57.0.0   AS608                                                             07/07/2021 19:56:52 PAGE 6   
+C51 COMPILER V9.57.0.0   AS608                                                             09/15/2021 12:41:20 PAGE 6   
 
  296          
  297          
@@ -334,9 +334,9 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1082    ----
+   CODE SIZE        =    850    ----
    CONSTANT SIZE    =     58    ----
-   XDATA SIZE       =     11      39
+   XDATA SIZE       =     11      22
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

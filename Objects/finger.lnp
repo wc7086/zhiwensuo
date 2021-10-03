@@ -6,6 +6,7 @@
 ".\Objects\oled.obj",
 ".\Objects\pwr.obj",
 ".\Objects\servo.obj",
-".\Objects\eeprom.obj" 
+".\Objects\eeprom.obj",
+".\Objects\beep.obj" 
 TO ".\Objects\finger" 
 PRINT(".\Listings\finger.m51") RAMSIZE(256) 

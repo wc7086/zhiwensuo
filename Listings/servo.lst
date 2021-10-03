@@ -1,4 +1,4 @@
-C51 COMPILER V9.57.0.0   SERVO                                                             07/07/2021 19:56:53 PAGE 1   
+C51 COMPILER V9.57.0.0   SERVO                                                             09/15/2021 12:41:20 PAGE 1   
 
 
 C51 COMPILER V9.57.0.0, COMPILATION OF MODULE SERVO
@@ -9,103 +9,147 @@ COMPILER INVOKED BY: D:\software\keil5\C51\BIN\C51.EXE servo.c LARGE OPTIMIZE(7,
 line level    source
 
    1          #include "servo.h"
-   2          void Delay17800us()   //@11.0592MHz
-   3          {
-   4   1        unsigned char i, j, k;
-   5   1      
-   6   1        i = 1;
-   7   1        j = 192;
-   8   1        k = 121;
-   9   1        do
-  10   1        {
-  11   2          do
-  12   2          {
-  13   3            while (--k);
-  14   3          } while (--j);
-  15   2        } while (--i);
-  16   1      }
-  17          
-  18          void Delay2200us()    //@11.0592MHz
-  19          {
-  20   1        unsigned char i, j;
-  21   1      
-  22   1        _nop_();
-  23   1        _nop_();
-  24   1        i = 24;
-  25   1        j = 167;
-  26   1        do
-  27   1        {
-  28   2          while (--j);
-  29   2        } while (--i);
-  30   1      }
-  31          void Delay800us()   //@11.0592MHz
-  32          {
-  33   1        unsigned char i, j;
-  34   1      
-  35   1        _nop_();
-  36   1        _nop_();
-  37   1        _nop_();
-  38   1        i = 9;
-  39   1        j = 151;
-  40   1        do
-  41   1        {
-  42   2          while (--j);
-  43   2        } while (--i);
-  44   1      }
-  45          void Delay19200us()   //@11.0592MHz
-  46          {
-  47   1        unsigned char i, j, k;
-  48   1      
-  49   1        _nop_();
-  50   1        _nop_();
-  51   1        _nop_();
-  52   1        i = 1;
-  53   1        j = 207;
-  54   1        k = 136;
-C51 COMPILER V9.57.0.0   SERVO                                                             07/07/2021 19:56:53 PAGE 2   
+   2          
+   3          //u16 angle=0;  //¶æ»ú½Ç¶È
+   4          //u8 cnt;       //ÖÐ¶Ï´ÎÊý
+   5          //#define servo_cnt (((angle*10)/45))/10+10   
+   6          //////50usÒ»´ÎÖÐ¶Ï ¶æ»úÖÜÆÚÊÇ20ms 400´ÎÖÐ¶Ï  0.5ms-2.5msµÄÕ¼¿Õ±È¶ÔÓ¦¶æ»ú0-180¶È½Ç¶È  10-50 180/40=4.5  ·Å´
+             -ó10±¶£¬¾Í²»ÓÃ¸¡µã¼ÆËãÁË
+   7          void Delay17800us()   //@11.0592MHz
+   8          {
+   9   1        unsigned char i, j, k;
+  10   1      
+  11   1        i = 1;
+  12   1        j = 192;
+  13   1        k = 121;
+  14   1        do
+  15   1        {
+  16   2          do
+  17   2          {
+  18   3            while (--k);
+  19   3          } while (--j);
+  20   2        } while (--i);
+  21   1      }
+  22          
+  23          void Delay2200us()    //@11.0592MHz
+  24          {
+  25   1        unsigned char i, j;
+  26   1      
+  27   1        _nop_();
+  28   1        _nop_();
+  29   1        i = 24;
+  30   1        j = 167;
+  31   1        do
+  32   1        {
+  33   2          while (--j);
+  34   2        } while (--i);
+  35   1      }
+  36          void Delay800us()     //@11.0592MHz
+  37          {
+  38   1        unsigned char i, j;
+  39   1      
+  40   1        _nop_();
+  41   1        _nop_();
+  42   1        _nop_();
+  43   1        i = 9;
+  44   1        j = 151;
+  45   1        do
+  46   1        {
+  47   2          while (--j);
+  48   2        } while (--i);
+  49   1      }
+  50          void Delay19200us()   //@11.0592MHz
+  51          {
+  52   1        unsigned char i, j, k;
+  53   1      
+C51 COMPILER V9.57.0.0   SERVO                                                             09/15/2021 12:41:20 PAGE 2   
 
-  55   1        do
-  56   1        {
-  57   2          do
-  58   2          {
-  59   3            while (--k);
-  60   3          } while (--j);
-  61   2        } while (--i);
-  62   1      }
-  63          
-  64          /*----------------------------
-  65          ¶æ»ú¿ªÃÅ£¬ÑÓÊ±Ê±¼ä
-  66          ----------------------------*/
-  67          void Door_Open(u16 ntime)
-  68          {
-  69   1        u16 i;
-  70   1        servo_pwr=0;
-  71   1        for(i=0;i<ntime;i++)
-  72   1        {
-  73   2          servo=0;
-  74   2          Delay19200us();
-  75   2          servo=1;
-  76   2          Delay800us();
-  77   2        }
-  78   1        
-  79   1        delay_ms(ntime*20);
-  80   1        
-  81   1        for(i=0;i<ntime;i++)
-  82   1        {
-  83   2          servo=0;
-  84   2          Delay17800us();
-  85   2          servo=1;
-  86   2          Delay2200us();
-  87   2        }
-  88   1        servo_pwr=1;      //¹Ø±Õ¶æ»úµçÔ´
-  89   1      }
-  90          
-  91            
-  92            
+  54   1        _nop_();
+  55   1        _nop_();
+  56   1        _nop_();
+  57   1        i = 1;
+  58   1        j = 207;
+  59   1        k = 136;
+  60   1        do
+  61   1        {
+  62   2          do
+  63   2          {
+  64   3            while (--k);
+  65   3          } while (--j);
+  66   2        } while (--i);
+  67   1      }
+  68          
+  69          /*----------------------------
+  70          ¶æ»ú¿ªÃÅ£¬ÑÓÊ±Ê±¼ä
+  71          ----------------------------*/
+  72          //void Door_Open(u16 ntime)
+  73          //{
+  74          //  servo_pwr=0;
+  75          //  angle=27;
+  76          //  delay_ms(ntime);
+  77          //  servo_pwr=1;
+  78          //  beep_work(2,100);
+  79          //  delay_ms(ntime);
+  80          //  servo_pwr=0;
+  81          //  angle=153;
+  82          //  delay_ms(ntime);
+  83          //  servo_pwr=1;
+  84          //}
+  85          void Door_Open(u16 ntime)
+  86          {
+  87   1        u16 i;
+  88   1        servo_pwr=0;
+  89   1        for(i=0;i<(ntime/20);i++)
+  90   1        {
+  91   2          servo=0;
+  92   2          Delay19200us();
+  93   2          servo=1;
+  94   2          Delay800us();
+  95   2        }
+  96   1        beep_work(2,100);
+  97   1        delay_ms(ntime);
+  98   1        
+  99   1        for(i=0;i<(ntime/20);i++)
+ 100   1        {
+ 101   2          servo=0;
+ 102   2          Delay17800us();
+ 103   2          servo=1;
+ 104   2          Delay2200us();
+ 105   2        }
+ 106   1        servo_pwr=1;      //¹Ø±Õ¶æ»úµçÔ´
+ 107   1      }
+ 108          
+ 109          //void Timer0_Init()
+ 110          //{
+ 111          //  AUXR |=  (1<<7);    // Timer0 set as 1T mode
+ 112          //  TMOD &= ~(1<<2);    // Timer0 set as Timer
+ 113          //  TMOD &= ~0x03;      // Timer0 set as 16 bits Auto Reload
+ 114          //  TH0 = (65535-600) / 256;  //Timer0 Load
+ 115          //  TL0 = (65535-600) % 256;  //50us
+C51 COMPILER V9.57.0.0   SERVO                                                             09/15/2021 12:41:20 PAGE 3   
+
+ 116          //  ET0 = 1;        //Timer0 Interrupt Enable
+ 117          //  TR0 = 1;        //Timer0 Run
+ 118          //  EA = 1;         //´ò¿ª×ÜÖÐ¶Ï
+ 119          //}
+ 120          
+ 121          //void tm0() interrupt 1
+ 122          //{
+ 123          //  cnt++;
+ 124          //  if(servo_cnt>cnt)
+ 125          //    servo=0;
+ 126          //  else
+ 127          //    servo=1;
+ 128          //  if(cnt==400)
+ 129          //  {
+ 130          //    cnt=0;
+ 131          //  }
+ 132          //}
+ 133            
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    149    ----
+   CODE SIZE        =    169    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----       2
    PDATA SIZE       =   ----    ----

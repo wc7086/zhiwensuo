@@ -196,37 +196,37 @@ u8 FPM10A_Delete_All_Fingerprint()
 		return 1;
 }
 //删除 flash 数据库中指定 ID 号开始的 N 个指纹模板
-u8 FPM10A_Delete_N_Fingerprint(unsigned int storeID,unsigned int N)
-{
-	unsigned char i=0;
-	unsigned long temp = 0;
-	unsigned char FPM10A_Delete_Finger[10];
-	FPM10A_Delete_Finger[0]=0x01;
-	FPM10A_Delete_Finger[1]=0x00;
-	FPM10A_Delete_Finger[2]=0x07;
-	FPM10A_Delete_Finger[3]=0x0c;
-	FPM10A_Delete_Finger[4]=(storeID&0xFF00)>>8;
-	FPM10A_Delete_Finger[5]=(storeID&0x00FF);
-	FPM10A_Delete_Finger[6]=(N&0x00FF)>>8;
-	FPM10A_Delete_Finger[7]=(N&0x00FF);
-	for(i=0;i<8;i++)   //计算校验和
-		 temp = temp + FPM10A_Delete_Finger[i]; 
-	FPM10A_Delete_Finger[8]=(temp & 0x00FF00) >> 8; //存放校验数据
-	FPM10A_Delete_Finger[9]= temp & 0x0000FF;	
-	
-	FPM10A_Cmd_Send_Pack_Head();
-	for(i=0;i<10;i++)
-		Uart_Send_Byte(FPM10A_Delete_Finger[i]);      //发送命令
-	
-	FPM10A_Receive_Data(); 
-	
-	if(FPM10A_RECEICE_BUFFER[9] == 0)					//判断数据低第9位是否接收到0
-	{
-			return 0;
-	}
-	else
-		return 1;
-}
+//u8 FPM10A_Delete_N_Fingerprint(unsigned int storeID,unsigned int N)
+//{
+//	unsigned char i=0;
+//	unsigned long temp = 0;
+//	unsigned char FPM10A_Delete_Finger[10];
+//	FPM10A_Delete_Finger[0]=0x01;
+//	FPM10A_Delete_Finger[1]=0x00;
+//	FPM10A_Delete_Finger[2]=0x07;
+//	FPM10A_Delete_Finger[3]=0x0c;
+//	FPM10A_Delete_Finger[4]=(storeID&0xFF00)>>8;
+//	FPM10A_Delete_Finger[5]=(storeID&0x00FF);
+//	FPM10A_Delete_Finger[6]=(N&0x00FF)>>8;
+//	FPM10A_Delete_Finger[7]=(N&0x00FF);
+//	for(i=0;i<8;i++)   //计算校验和
+//		 temp = temp + FPM10A_Delete_Finger[i]; 
+//	FPM10A_Delete_Finger[8]=(temp & 0x00FF00) >> 8; //存放校验数据
+//	FPM10A_Delete_Finger[9]= temp & 0x0000FF;	
+//	
+//	FPM10A_Cmd_Send_Pack_Head();
+//	for(i=0;i<10;i++)
+//		Uart_Send_Byte(FPM10A_Delete_Finger[i]);      //发送命令
+//	
+//	FPM10A_Receive_Data(); 
+//	
+//	if(FPM10A_RECEICE_BUFFER[9] == 0)					//判断数据低第9位是否接收到0
+//	{
+//			return 0;
+//	}
+//	else
+//		return 1;
+//}
 //读取指纹个数
 u16 PS_ValidTempleteNum()
 {

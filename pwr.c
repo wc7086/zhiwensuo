@@ -20,24 +20,23 @@ void Delay(u8 n)
     }
 }
 /*----------------------------
-读取输入电源电压
+读取从ADC引脚读取3.3V电压数值
+用于计算电源电压 256/VCC=ADC3V3_Get()/3.3
+避免浮点运算，会占用大量内存
 ----------------------------*/
-u8 Pwr_Get()  //8位ADC模式
+u8 ADC3V3_Get()  //
 {
-	P1ASF = 0x00;                   //不设置P1口为模拟口,则ch0测量第9通道，内部基准电压
+	P1ASF = 0xff;                   //设置P1口为AD口
   ADC_RES = 0;                    //清除结果寄存器
-  ADC_CONTR = ADC_POWER | ADC_SPEEDLL;
+	ADC_CONTR = ADC_POWER | ADC_SPEEDLL;
   Delay(2);                       //ADC上电并延时
-	ADC_CONTR = ADC_POWER | ADC_SPEEDLL | 0 | ADC_START;
+	ADC_CONTR = ADC_POWER | ADC_SPEEDLL | 6 | ADC_START;
 	_nop_();                        //等待4个NOP
 	_nop_();
 	_nop_();
 	_nop_();
 	while (!(ADC_CONTR & ADC_FLAG));//等待ADC转换完成
-	ADC_CONTR &= ~ADC_FLAG;         //Close ADC  //ADC_FLAG=1;
-	
-	
-	ADC_CONTR &= 0X7F;  						//ADC_POWER=0，关闭ADC电源降低功耗
-	
+	ADC_CONTR &= ~ADC_FLAG;         //Close ADC
+	P1ASF = 0x00;                   //不设置P1口为模拟口,则ch0测量第9通道，内部基准电压
 	return ADC_RES;                 //返回ADC结果
 }

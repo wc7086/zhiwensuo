@@ -5,18 +5,23 @@
 #include "servo.h"
 #include "pwr.h"
 #include "oled.h"
+#include "beep.h"
 #include "eeprom.h"
-
+sbit tch_in = P3^2;
+sbit as608_pwr = P1^2;
 /*
-使用本代码，请注明出处
-淘宝店铺：可待电子
+使用本代码，请注明出处：可待电子
+成品购买淘宝店铺：可待电子
 接51、stm32单片机程序仿真设计
 qq：3155913003
 */
+u16 Battery=0;				//电池电压
+u16 	volt;
 
-u8 key;
-u8 weakup_flag=2;
-u16 time=0;
+u8 	key;						//按键值
+u8 	weakup_flag=2; 	//唤醒标志
+u16 time=0;  				//关机时间
+
 /*----------------------------
 掉电模式，关闭系统电源 uA待机
 ----------------------------*/
@@ -61,30 +66,41 @@ void Pwr_Off()
 	P5M1 = 0x00;
 }
 /*----------------------------
+获取电池电压
+----------------------------*/
+void Battery_get()
+{
+	volt =  ADC3V3_Get();  		//读取3.3V电压值为多少
+	delay_ms(1);
+	volt = ADC3V3_Get();  		//读取3.3V电压值为多少
+	delay_ms(1);
+	volt += ADC3V3_Get();  		//读取3.3V电压值为多少
+	volt=volt/2;
+	Battery = 85248 / volt;	//256/VCC = volt/3.33   => VCC=256*3.3/volt
+}
+/*----------------------------
 显示电池电压
 ----------------------------*/
 void show_volt()
 {
-	int volt;
-	u8 i;
-	volt=31916/Pwr_Get();  //3.16V bandGap值101
-	volt=volt*2-720;
-	if(volt>99)
-		volt=99;
-	if(volt<0)
-		volt=0;
-	i=32;
+	u8 i=0;
+	Battery_get();
+	i=24;
 	OLED_ShowCHinese(i,2,12);
 	i+=16;
-	OLED_ShowCHinese(i,2,13);
+	OLED_ShowCHinese(i,2,13);  //电量
 	i+=16;
 	OLED_ShowChar(i,2,':');
 	i+=8;
-	OLED_ShowChar(i,2,volt %100/10	+0x30);
+	OLED_ShowChar(i,2,Battery %1000/100	+0x30);
 	i+=8;
-	OLED_ShowChar(i,2,volt	%10		  +0x30);
+	OLED_ShowChar(i,2,'.');
 	i+=8;
-	OLED_ShowChar(i,2,'%');
+	OLED_ShowChar(i,2,Battery	%100/10		+0x30);
+	i+=8;
+	OLED_ShowChar(i,2,Battery %10				+0x30);
+	i+=8;
+	OLED_ShowChar(i,2,'V');
 }
 /*----------------------------
 按键触发唤醒后执行任务
@@ -102,10 +118,12 @@ void key_weak_up_work()
 		i++;
 		delay_ms(1);
 	}
-	delay_ms(500);
-	finger_id=PS_ValidTempleteNum();
+	delay_ms(400);
 	OLED_Init();							//初始化OLED
 	show_volt();
+	beep_work(1,100);
+	finger_id=PS_ValidTempleteNum();
+	
 	while(time-->0)
 	{		
 		Delay1ms();
@@ -210,34 +228,33 @@ void finger_weakup_work()
 	
 	as608_pwr=0;							//打开OLED和指纹电源
 	uart_rx_sta=0;
+	Battery_get();
 	delay_ms(5);							//指纹供电10ms以上再初始化串口
 	Uart1_Init();							//串口初始化
-	while((uart_rx_sta==0)&&(i<200))
+	while((uart_rx_sta==0)&&(i<200)) //超过200ms没收到串口数据,或者收到数据，就跳过
 	{
 		i++;
 		delay_ms(1);
 	}
+	OLED_Init();							//上电后，初始化OLED需要延时100MS,所以放在这里
+	beep_work(1,100);
 	
 	while(time--)
 	{
 		if(FPM10A_Find_Fingerprint()==0)
 		{
-			OLED_Init();							//初始化OLED,需要延时100MS
 			show_volt();
-			Door_Open(80);
+			Door_Open(1600);
 			break;
 		}
 	}
 	
 }
-
-
 /*----------------------------
 主函数
 ----------------------------*/
 void main()
 { 		
-//	u8 i,str[]={0xef,0x01,0xff,0xff,0xff,0xff,0x01,0x00,0x03,0xaa,0x00,0xae};
 	P1M0 = 0x00;
 	P1M1 = 0x00;
 	P3M0 = 0x00;
@@ -246,28 +263,6 @@ void main()
 	P4M1 = 0x00;
 	P5M0 = 0x00;
 	P5M1 = 0x00;
-//	uart_rx_sta=0;
-//	as608_pwr=0;							//打开OLED和指纹电源
-//	delay_ms(10);							//指纹供电10ms以上再初始化串口
-//	Uart1_Init();							//串口初始化
-//	while((uart_rx_sta==0)&&(i<200))
-//	{
-//		i++;
-//		delay_ms(1);
-//	}
-//	delay_ms(500);
-//	
-//	finger_id=PS_ValidTempleteNum();
-//	OLED_Init();							//初始化OLED
-//	
-//	FPM10A_RECEICE_BUFFER[9]=1;
-//	for(i=0;i<12;i++)
-//		SendData(str[i]);
-//	FPM10A_Receive_Data();
-//	delay_ms(500);
-//	if(FPM10A_RECEICE_BUFFER[9]==0)
-//		show_volt();
-//		while(1);
 	while(1)
 	{
 		Pwr_Off();						//进入掉电模式，省电，程序不运行
@@ -275,6 +270,18 @@ void main()
 			key_weak_up_work();
 		if(weakup_flag==0)		//指纹掉电模式唤醒后处理
 			finger_weakup_work();
+		
+		if(Battery<370)				//低于3.7V报警
+		{
+			beep_work(2,100);
+			beep_work(1,500);
+			beep_work(2,100);
+			beep_work(1,500);
+			beep_work(2,100);
+			beep_work(1,500);
+			beep_work(2,100);
+			beep_work(1,500);
+		}
 	}
 }
 /*----------------------------

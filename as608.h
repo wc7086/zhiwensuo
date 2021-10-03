@@ -6,8 +6,7 @@
 #include "stc15.h" 
 #include "delay.h" 
 #include "uart.h" 
-sbit tch_in = P3^2;
-sbit as608_pwr = P1^2;
+
 extern unsigned int finger_id;
 #define PS_Led_red 			0x01
 #define PS_Led_green 		0x02

@@ -1,4 +1,4 @@
-C51 COMPILER V9.57.0.0   MAIN                                                              07/07/2021 19:56:51 PAGE 1   
+C51 COMPILER V9.57.0.0   MAIN                                                              09/15/2021 13:52:11 PAGE 1   
 
 
 C51 COMPILER V9.57.0.0, COMPILATION OF MODULE MAIN
@@ -15,319 +15,326 @@ line level    source
    5          #include "servo.h"
    6          #include "pwr.h"
    7          #include "oled.h"
-   8          #include "eeprom.h"
-   9          
-  10          /*
-  11          使用本代码，请注明出处
-  12          淘宝店铺：可待电子
-  13          接51、stm32单片机程序仿真设计
-  14          qq：3155913003
-  15          */
-  16          
-  17          u8 key;
-  18          u8 weakup_flag=2;
-  19          u16 time=0;
-  20          /*----------------------------
-  21          掉电模式，关闭系统电源 uA待机
-  22          ----------------------------*/
-  23          void Pwr_Off()
-  24          {
-  25   1        
-  26   1        as608_pwr=1;      //关闭OLED和指纹电源
-  27   1        
-  28   1        delay_ms(600);
-  29   1        
-  30   1        P1M0 = 0xff;
-  31   1        P1M1 = 0xff;
-  32   1        P4M0 = 0xff;
-  33   1        P4M1 = 0xff;
-  34   1        P5M0 = 0xff;
-  35   1        P5M1 = 0xff;
-  36   1        P3M0 = 0xc3;      //1100 0011
-  37   1        P3M1 = 0xc3;      //1100 0011
-  38   1        
-  39   1        IT0 = 0;          //设置INT0的中断类型为上升沿和下降沿,上升沿和下降沿均可唤醒
-  40   1        EX0 = 1;          //使能INT0中断
-  41   1        
-  42   1        IT1 = 1;          //设置INT1的中断类型 (1:仅下降沿 0:上升沿和下降沿)
-  43   1        EX1 = 1;          //使能INT1中断
-  44   1        
-  45   1        EA=1;
+   8          #include "beep.h"
+   9          #include "eeprom.h"
+  10          sbit tch_in = P3^2;
+  11          sbit as608_pwr = P1^2;
+  12          /*
+  13          使用本代码，请注明出处：可待电子
+  14          成品购买淘宝店铺：可待电子
+  15          接51、stm32单片机程序仿真设计
+  16          qq：3155913003
+  17          */
+  18          u16 Battery=0;        //电池电压
+  19          u16   volt;
+  20          
+  21          u8  key;            //按键值
+  22          u8  weakup_flag=2;  //唤醒标志
+  23          u16 time=0;         //关机时间
+  24          
+  25          /*----------------------------
+  26          掉电模式，关闭系统电源 uA待机
+  27          ----------------------------*/
+  28          void Pwr_Off()
+  29          {
+  30   1        
+  31   1        as608_pwr=1;      //关闭OLED和指纹电源
+  32   1        
+  33   1        delay_ms(600);
+  34   1        
+  35   1        P1M0 = 0xff;
+  36   1        P1M1 = 0xff;
+  37   1        P4M0 = 0xff;
+  38   1        P4M1 = 0xff;
+  39   1        P5M0 = 0xff;
+  40   1        P5M1 = 0xff;
+  41   1        P3M0 = 0xc3;      //1100 0011
+  42   1        P3M1 = 0xc3;      //1100 0011
+  43   1        
+  44   1        IT0 = 0;          //设置INT0的中断类型为上升沿和下降沿,上升沿和下降沿均可唤醒
+  45   1        EX0 = 1;          //使能INT0中断
   46   1        
-  47   1        delay_ms(20);
-  48   1        
-  49   1        PCON |= 0x02;      //MCU进入掉电模式
-  50   1        _nop_();          //掉电模式被唤醒后,首先执行此语句,然后再进入中断服务程序
-  51   1        _nop_();
-  52   1        _nop_();          
-  53   1        _nop_();
-  54   1        P1M0 = 0x00;
-C51 COMPILER V9.57.0.0   MAIN                                                              07/07/2021 19:56:51 PAGE 2   
+  47   1        IT1 = 1;          //设置INT1的中断类型 (1:仅下降沿 0:上升沿和下降沿)
+  48   1        EX1 = 1;          //使能INT1中断
+  49   1        
+  50   1        EA=1;
+  51   1        
+  52   1        delay_ms(20);
+  53   1        
+  54   1        PCON |= 0x02;      //MCU进入掉电模式
+C51 COMPILER V9.57.0.0   MAIN                                                              09/15/2021 13:52:11 PAGE 2   
 
-  55   1        P1M1 = 0x00;
-  56   1        P3M0 = 0x00;
-  57   1        P3M1 = 0x00;
-  58   1        P4M0 = 0x00;
-  59   1        P4M1 = 0x00;
-  60   1        P5M0 = 0x00;
-  61   1        P5M1 = 0x00;
-  62   1      }
-  63          /*----------------------------
-  64          显示电池电压
-  65          ----------------------------*/
-  66          void show_volt()
-  67          {
-  68   1        int volt;
-  69   1        u8 i;
-  70   1        volt=31916/Pwr_Get();  //3.16V bandGap值101
-  71   1        volt=volt*2-720;
-  72   1        if(volt>99)
-  73   1          volt=99;
-  74   1        if(volt<0)
-  75   1          volt=0;
-  76   1        i=32;
-  77   1        OLED_ShowCHinese(i,2,12);
-  78   1        i+=16;
-  79   1        OLED_ShowCHinese(i,2,13);
-  80   1        i+=16;
-  81   1        OLED_ShowChar(i,2,':');
-  82   1        i+=8;
-  83   1        OLED_ShowChar(i,2,volt %100/10  +0x30);
-  84   1        i+=8;
-  85   1        OLED_ShowChar(i,2,volt  %10     +0x30);
-  86   1        i+=8;
-  87   1        OLED_ShowChar(i,2,'%');
-  88   1      }
-  89          /*----------------------------
-  90          按键触发唤醒后执行任务
-  91          ----------------------------*/
-  92          void key_weak_up_work()     
-  93          {
-  94   1        u8 i=0,step=0;
-  95   1        time=2000;
-  96   1        uart_rx_sta=0;
-  97   1        as608_pwr=0;              //打开OLED和指纹电源
-  98   1        delay_ms(10);             //指纹供电10ms以上再初始化串口
-  99   1        Uart1_Init();             //串口初始化
- 100   1        while((uart_rx_sta==0)&&(i<200))
- 101   1        {
- 102   2          i++;
- 103   2          delay_ms(1);
- 104   2        }
- 105   1        delay_ms(500);
- 106   1        finger_id=PS_ValidTempleteNum();
- 107   1        OLED_Init();              //初始化OLED
- 108   1        show_volt();
- 109   1        while(time-->0)
- 110   1        {   
- 111   2          Delay1ms();
- 112   2          key=Key_Scan();   //按键按下,时间刷新
- 113   2          if(key!=0)
- 114   2            time=5000;
- 115   2          if(step==0)
- 116   2          {
-C51 COMPILER V9.57.0.0   MAIN                                                              07/07/2021 19:56:51 PAGE 3   
+  55   1        _nop_();          //掉电模式被唤醒后,首先执行此语句,然后再进入中断服务程序
+  56   1        _nop_();
+  57   1        _nop_();          
+  58   1        _nop_();
+  59   1        P1M0 = 0x00;
+  60   1        P1M1 = 0x00;
+  61   1        P3M0 = 0x00;
+  62   1        P3M1 = 0x00;
+  63   1        P4M0 = 0x00;
+  64   1        P4M1 = 0x00;
+  65   1        P5M0 = 0x00;
+  66   1        P5M1 = 0x00;
+  67   1      }
+  68          /*----------------------------
+  69          获取电池电压
+  70          ----------------------------*/
+  71          void Battery_get()
+  72          {
+  73   1        volt =  ADC3V3_Get();     //读取3.3V电压值为多少
+  74   1        delay_ms(1);
+  75   1        volt = ADC3V3_Get();      //读取3.3V电压值为多少
+  76   1        delay_ms(1);
+  77   1        volt += ADC3V3_Get();     //读取3.3V电压值为多少
+  78   1        volt=volt/2;
+  79   1        Battery = 85248 / volt; //256/VCC = volt/3.33   => VCC=256*3.3/volt
+  80   1      }
+  81          /*----------------------------
+  82          显示电池电压
+  83          ----------------------------*/
+  84          void show_volt()
+  85          {
+  86   1        u8 i=0;
+  87   1        Battery_get();
+  88   1        i=24;
+  89   1        OLED_ShowCHinese(i,2,12);
+  90   1        i+=16;
+  91   1        OLED_ShowCHinese(i,2,13);  //电量
+  92   1        i+=16;
+  93   1        OLED_ShowChar(i,2,':');
+  94   1        i+=8;
+  95   1        OLED_ShowChar(i,2,Battery %1000/100 +0x30);
+  96   1        i+=8;
+  97   1        OLED_ShowChar(i,2,'.');
+  98   1        i+=8;
+  99   1        OLED_ShowChar(i,2,Battery %100/10   +0x30);
+ 100   1        i+=8;
+ 101   1        OLED_ShowChar(i,2,Battery %10       +0x30);
+ 102   1        i+=8;
+ 103   1        OLED_ShowChar(i,2,'V');
+ 104   1      }
+ 105          /*----------------------------
+ 106          按键触发唤醒后执行任务
+ 107          ----------------------------*/
+ 108          void key_weak_up_work()     
+ 109          {
+ 110   1        u8 i=0,step=0;
+ 111   1        time=2000;
+ 112   1        uart_rx_sta=0;
+ 113   1        as608_pwr=0;              //打开OLED和指纹电源
+ 114   1        delay_ms(10);             //指纹供电10ms以上再初始化串口
+ 115   1        Uart1_Init();             //串口初始化
+ 116   1        while((uart_rx_sta==0)&&(i<200))
+C51 COMPILER V9.57.0.0   MAIN                                                              09/15/2021 13:52:11 PAGE 3   
 
- 117   3            if(key==1)        //放上手指，按key1添加
- 118   3            {
- 119   4              OLED_ShowString(0,0,"                ");
- 120   4              OLED_ShowString(0,2,"                ");
- 121   4              OLED_ShowCHinese(32,0,0); //添加用户
- 122   4              OLED_ShowCHinese(48,0,1);
- 123   4              OLED_ShowCHinese(64,0,10);
- 124   4              OLED_ShowCHinese(80,0,11);
- 125   4              OLED_ShowCHinese(32,2,14);  //请放手指
- 126   4              OLED_ShowCHinese(48,2,15);
- 127   4              OLED_ShowCHinese(64,2,16);
- 128   4              OLED_ShowCHinese(80,2,17);
- 129   4              for(i=0;i<10;i++)
- 130   4              {
- 131   5                delay_ms(100);
- 132   5                if(FPM10A_Add_Fingerprint()==0)
- 133   5                {
- 134   6                  OLED_ShowString(0,2,"                ");
- 135   6                  OLED_ShowCHinese(64,0,2);//成功
- 136   6                  OLED_ShowCHinese(80,0,3);
- 137   6                  break;
- 138   6                }
- 139   5              }
- 140   4              if(i==10)
- 141   4              {
- 142   5                OLED_ShowString(0,2,"                ");
- 143   5                OLED_ShowCHinese(64,0,4);//失败
- 144   5                OLED_ShowCHinese(80,0,5);
- 145   5              }
- 146   4              delay_ms(1000);
- 147   4              step=2;
- 148   4            }
- 149   3            if(key==2)        //key2清除所有
- 150   3            {
- 151   4              OLED_ShowCHinese(16,0,6);//删除所有指纹
- 152   4              OLED_ShowCHinese(32,0,7);
- 153   4              OLED_ShowCHinese(48,0,8);
- 154   4              OLED_ShowCHinese(64,0,9);
- 155   4              OLED_ShowCHinese(80,0,10);
- 156   4              OLED_ShowCHinese(96,0,11);
- 157   4              OLED_ShowString(0,2," Yes?       No? ");
- 158   4              step=1;
- 159   4              
- 160   4            }
- 161   3            if(key==3)
- 162   3              break;
- 163   3          }
- 164   2      
- 165   2          if(step==1)
- 166   2          {
- 167   3            if(key==1)        //删除所有指纹
+ 117   1        {
+ 118   2          i++;
+ 119   2          delay_ms(1);
+ 120   2        }
+ 121   1        delay_ms(400);
+ 122   1        OLED_Init();              //初始化OLED
+ 123   1        show_volt();
+ 124   1        beep_work(1,100);
+ 125   1        finger_id=PS_ValidTempleteNum();
+ 126   1        
+ 127   1        while(time-->0)
+ 128   1        {   
+ 129   2          Delay1ms();
+ 130   2          key=Key_Scan();   //按键按下,时间刷新
+ 131   2          if(key!=0)
+ 132   2            time=5000;
+ 133   2          if(step==0)
+ 134   2          {
+ 135   3            if(key==1)        //放上手指，按key1添加
+ 136   3            {
+ 137   4              OLED_ShowString(0,0,"                ");
+ 138   4              OLED_ShowString(0,2,"                ");
+ 139   4              OLED_ShowCHinese(32,0,0); //添加用户
+ 140   4              OLED_ShowCHinese(48,0,1);
+ 141   4              OLED_ShowCHinese(64,0,10);
+ 142   4              OLED_ShowCHinese(80,0,11);
+ 143   4              OLED_ShowCHinese(32,2,14);  //请放手指
+ 144   4              OLED_ShowCHinese(48,2,15);
+ 145   4              OLED_ShowCHinese(64,2,16);
+ 146   4              OLED_ShowCHinese(80,2,17);
+ 147   4              for(i=0;i<10;i++)
+ 148   4              {
+ 149   5                delay_ms(100);
+ 150   5                if(FPM10A_Add_Fingerprint()==0)
+ 151   5                {
+ 152   6                  OLED_ShowString(0,2,"                ");
+ 153   6                  OLED_ShowCHinese(64,0,2);//成功
+ 154   6                  OLED_ShowCHinese(80,0,3);
+ 155   6                  break;
+ 156   6                }
+ 157   5              }
+ 158   4              if(i==10)
+ 159   4              {
+ 160   5                OLED_ShowString(0,2,"                ");
+ 161   5                OLED_ShowCHinese(64,0,4);//失败
+ 162   5                OLED_ShowCHinese(80,0,5);
+ 163   5              }
+ 164   4              delay_ms(1000);
+ 165   4              step=2;
+ 166   4            }
+ 167   3            if(key==2)        //key2清除所有
  168   3            {
- 169   4              OLED_ShowString(0,0,"                ");
- 170   4              OLED_ShowString(0,2,"                ");
- 171   4              FPM10A_Delete_All_Fingerprint();
- 172   4              for(i=3;i<13;i++)
- 173   4              {
- 174   5                OLED_ShowChar(i*8-8,2,'=');
- 175   5                OLED_ShowChar(i*8,2,'>');
- 176   5                delay_ms(200);
- 177   5              }
- 178   4              step=2;
-C51 COMPILER V9.57.0.0   MAIN                                                              07/07/2021 19:56:51 PAGE 4   
+ 169   4              OLED_ShowCHinese(16,0,6);//删除所有指纹
+ 170   4              OLED_ShowCHinese(32,0,7);
+ 171   4              OLED_ShowCHinese(48,0,8);
+ 172   4              OLED_ShowCHinese(64,0,9);
+ 173   4              OLED_ShowCHinese(80,0,10);
+ 174   4              OLED_ShowCHinese(96,0,11);
+ 175   4              OLED_ShowString(0,2," Yes?       No? ");
+ 176   4              step=1;
+ 177   4              
+ 178   4            }
+C51 COMPILER V9.57.0.0   MAIN                                                              09/15/2021 13:52:11 PAGE 4   
 
- 179   4              finger_id=0;
- 180   4            }
- 181   3            if(key==3)
- 182   3            {
- 183   4              step=2;
- 184   4            }
- 185   3          }
- 186   2      
- 187   2          if(step==2)
- 188   2          { 
- 189   3            step=0;
- 190   3            OLED_ShowString(0,0,"                ");
- 191   3            OLED_ShowString(0,2,"                ");
- 192   3            
- 193   3            OLED_ShowCHinese(32,0,10);
- 194   3            OLED_ShowCHinese(48,0,11);
- 195   3            OLED_ShowChar(64,0,':');
- 196   3            OLED_ShowChar(72,0,finger_id/100+0x30);
- 197   3            OLED_ShowChar(80,0,finger_id%100/10+0x30);
- 198   3            OLED_ShowChar(88,0,finger_id%10+0x30);
- 199   3            show_volt();
- 200   3          }
- 201   2        }
- 202   1      }
- 203          /*----------------------------
- 204          指纹触摸唤醒后执行任务
- 205          ----------------------------*/
- 206          void finger_weakup_work()   
- 207          {
- 208   1        u8 i=0;
- 209   1        u8 time = 3; //验证三次
- 210   1        
- 211   1        as608_pwr=0;              //打开OLED和指纹电源
- 212   1        uart_rx_sta=0;
- 213   1        delay_ms(5);              //指纹供电10ms以上再初始化串口
- 214   1        Uart1_Init();             //串口初始化
- 215   1        while((uart_rx_sta==0)&&(i<200))
- 216   1        {
- 217   2          i++;
- 218   2          delay_ms(1);
+ 179   3            if(key==3)
+ 180   3              break;
+ 181   3          }
+ 182   2      
+ 183   2          if(step==1)
+ 184   2          {
+ 185   3            if(key==1)        //删除所有指纹
+ 186   3            {
+ 187   4              OLED_ShowString(0,0,"                ");
+ 188   4              OLED_ShowString(0,2,"                ");
+ 189   4              FPM10A_Delete_All_Fingerprint();
+ 190   4              for(i=3;i<13;i++)
+ 191   4              {
+ 192   5                OLED_ShowChar(i*8-8,2,'=');
+ 193   5                OLED_ShowChar(i*8,2,'>');
+ 194   5                delay_ms(200);
+ 195   5              }
+ 196   4              step=2;
+ 197   4              finger_id=0;
+ 198   4            }
+ 199   3            if(key==3)
+ 200   3            {
+ 201   4              step=2;
+ 202   4            }
+ 203   3          }
+ 204   2      
+ 205   2          if(step==2)
+ 206   2          { 
+ 207   3            step=0;
+ 208   3            OLED_ShowString(0,0,"                ");
+ 209   3            OLED_ShowString(0,2,"                ");
+ 210   3            
+ 211   3            OLED_ShowCHinese(32,0,10);
+ 212   3            OLED_ShowCHinese(48,0,11);
+ 213   3            OLED_ShowChar(64,0,':');
+ 214   3            OLED_ShowChar(72,0,finger_id/100+0x30);
+ 215   3            OLED_ShowChar(80,0,finger_id%100/10+0x30);
+ 216   3            OLED_ShowChar(88,0,finger_id%10+0x30);
+ 217   3            show_volt();
+ 218   3          }
  219   2        }
- 220   1        
- 221   1        while(time--)
- 222   1        {
- 223   2          if(FPM10A_Find_Fingerprint()==0)
- 224   2          {
- 225   3            OLED_Init();              //初始化OLED,需要延时100MS
- 226   3            show_volt();
- 227   3            Door_Open(80);
- 228   3            break;
- 229   3          }
- 230   2        }
- 231   1        
- 232   1      }
- 233          
- 234          
- 235          /*----------------------------
- 236          主函数
- 237          ----------------------------*/
- 238          void main()
- 239          {     
- 240   1      //  u8 i,str[]={0xef,0x01,0xff,0xff,0xff,0xff,0x01,0x00,0x03,0xaa,0x00,0xae};
-C51 COMPILER V9.57.0.0   MAIN                                                              07/07/2021 19:56:51 PAGE 5   
+ 220   1      }
+ 221          /*----------------------------
+ 222          指纹触摸唤醒后执行任务
+ 223          ----------------------------*/
+ 224          void finger_weakup_work()   
+ 225          {
+ 226   1        u8 i=0;
+ 227   1        u8 time = 3; //验证三次
+ 228   1        
+ 229   1        as608_pwr=0;              //打开OLED和指纹电源
+ 230   1        uart_rx_sta=0;
+ 231   1        Battery_get();
+ 232   1        delay_ms(5);              //指纹供电10ms以上再初始化串口
+ 233   1        Uart1_Init();             //串口初始化
+ 234   1        while((uart_rx_sta==0)&&(i<200)) //超过200ms没收到串口数据,或者收到数据，就跳过
+ 235   1        {
+ 236   2          i++;
+ 237   2          delay_ms(1);
+ 238   2        }
+ 239   1        OLED_Init();              //上电后，初始化OLED需要延时100MS,所以放在这里
+ 240   1        beep_work(1,100);
+C51 COMPILER V9.57.0.0   MAIN                                                              09/15/2021 13:52:11 PAGE 5   
 
- 241   1        P1M0 = 0x00;
- 242   1        P1M1 = 0x00;
- 243   1        P3M0 = 0x00;
- 244   1        P3M1 = 0x00;
- 245   1        P4M0 = 0x00;
- 246   1        P4M1 = 0x00;
- 247   1        P5M0 = 0x00;
- 248   1        P5M1 = 0x00;
- 249   1      //  uart_rx_sta=0;
- 250   1      //  as608_pwr=0;              //打开OLED和指纹电源
- 251   1      //  delay_ms(10);             //指纹供电10ms以上再初始化串口
- 252   1      //  Uart1_Init();             //串口初始化
- 253   1      //  while((uart_rx_sta==0)&&(i<200))
- 254   1      //  {
- 255   1      //    i++;
- 256   1      //    delay_ms(1);
- 257   1      //  }
- 258   1      //  delay_ms(500);
- 259   1      //  
- 260   1      //  finger_id=PS_ValidTempleteNum();
- 261   1      //  OLED_Init();              //初始化OLED
- 262   1      //  
- 263   1      //  FPM10A_RECEICE_BUFFER[9]=1;
- 264   1      //  for(i=0;i<12;i++)
- 265   1      //    SendData(str[i]);
- 266   1      //  FPM10A_Receive_Data();
- 267   1      //  delay_ms(500);
- 268   1      //  if(FPM10A_RECEICE_BUFFER[9]==0)
- 269   1      //    show_volt();
- 270   1      //    while(1);
- 271   1        while(1)
- 272   1        {
- 273   2          Pwr_Off();            //进入掉电模式，省电，程序不运行
- 274   2          if(weakup_flag==1)    //key3按键唤醒
- 275   2            key_weak_up_work();
- 276   2          if(weakup_flag==0)    //指纹掉电模式唤醒后处理
- 277   2            finger_weakup_work();
- 278   2        }
- 279   1      }
- 280          /*----------------------------
- 281          INT1中断入口，按键key3唤醒
- 282          ----------------------------*/
- 283          void exint1() interrupt 2
- 284          {
- 285   1        weakup_flag=1;    //key3按键唤醒
+ 241   1        
+ 242   1        while(time--)
+ 243   1        {
+ 244   2          if(FPM10A_Find_Fingerprint()==0)
+ 245   2          {
+ 246   3            show_volt();
+ 247   3            Door_Open(1600);
+ 248   3            break;
+ 249   3          }
+ 250   2        }
+ 251   1        
+ 252   1      }
+ 253          /*----------------------------
+ 254          主函数
+ 255          ----------------------------*/
+ 256          void main()
+ 257          {     
+ 258   1        P1M0 = 0x00;
+ 259   1        P1M1 = 0x00;
+ 260   1        P3M0 = 0x00;
+ 261   1        P3M1 = 0x00;
+ 262   1        P4M0 = 0x00;
+ 263   1        P4M1 = 0x00;
+ 264   1        P5M0 = 0x00;
+ 265   1        P5M1 = 0x00;
+ 266   1        while(1)
+ 267   1        {
+ 268   2          Pwr_Off();            //进入掉电模式，省电，程序不运行
+ 269   2          if(weakup_flag==1)    //key3按键唤醒
+ 270   2            key_weak_up_work();
+ 271   2          if(weakup_flag==0)    //指纹掉电模式唤醒后处理
+ 272   2            finger_weakup_work();
+ 273   2          
+ 274   2          if(Battery<370)       //低于3.7V报警
+ 275   2          {
+ 276   3            beep_work(2,100);
+ 277   3            beep_work(1,500);
+ 278   3            beep_work(2,100);
+ 279   3            beep_work(1,500);
+ 280   3            beep_work(2,100);
+ 281   3            beep_work(1,500);
+ 282   3            beep_work(2,100);
+ 283   3            beep_work(1,500);
+ 284   3          }
+ 285   2        }
  286   1      }
  287          /*----------------------------
- 288          INT0中断入口,指纹触摸
+ 288          INT1中断入口，按键key3唤醒
  289          ----------------------------*/
- 290          void exint0() interrupt 0
+ 290          void exint1() interrupt 2
  291          {
- 292   1        weakup_flag=0;    //Tch指纹触摸高电平唤醒
+ 292   1        weakup_flag=1;    //key3按键唤醒
  293   1      }
- 294          /*---------------------------------------------------------------------*/
- 295          /* --- STC MCU Limited ------------------------------------------------*/
- 296          /* --- STC15F4K60S4 系列 定时器2用作串口1的波特率发生器举例------------*/
- 297          /* --- Mobile: (86)13922805190 ----------------------------------------*/
- 298          /* --- Fax: 86-0513-55012956,55012947,55012969 ------------------------*/
- 299          /* --- Tel: 86-0513-55012928,55012929,55012966-------------------------*/
- 300          /* --- Web: www.STCMCU.com --------------------------------------------*/
- 301          /* --- Web: www.GXWMCU.com --------------------------------------------*/
- 302          /* 如果要在程序中使用此代码,请在程序中注明使用了STC的资料及程序        */
-C51 COMPILER V9.57.0.0   MAIN                                                              07/07/2021 19:56:51 PAGE 6   
+ 294          /*----------------------------
+ 295          INT0中断入口,指纹触摸
+ 296          ----------------------------*/
+ 297          void exint0() interrupt 0
+ 298          {
+ 299   1        weakup_flag=0;    //Tch指纹触摸高电平唤醒
+ 300   1      }
+ 301          /*---------------------------------------------------------------------*/
+ 302          /* --- STC MCU Limited ------------------------------------------------*/
+C51 COMPILER V9.57.0.0   MAIN                                                              09/15/2021 13:52:11 PAGE 6   
 
- 303          /* 如果要在文章中应用此代码,请在文章中注明使用了STC的资料及程序        */
- 304          /*---------------------------------------------------------------------*/
+ 303          /* --- STC15F4K60S4 系列 定时器2用作串口1的波特率发生器举例------------*/
+ 304          /* --- Mobile: (86)13922805190 ----------------------------------------*/
+ 305          /* --- Fax: 86-0513-55012956,55012947,55012969 ------------------------*/
+ 306          /* --- Tel: 86-0513-55012928,55012929,55012966-------------------------*/
+ 307          /* --- Web: www.STCMCU.com --------------------------------------------*/
+ 308          /* --- Web: www.GXWMCU.com --------------------------------------------*/
+ 309          /* 如果要在程序中使用此代码,请在程序中注明使用了STC的资料及程序        */
+ 310          /* 如果要在文章中应用此代码,请在文章中注明使用了STC的资料及程序        */
+ 311          /*---------------------------------------------------------------------*/
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =   1200    ----
+   CODE SIZE        =   1400    ----
    CONSTANT SIZE    =     34    ----
-   XDATA SIZE       =      4       7
+   XDATA SIZE       =      8       5
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

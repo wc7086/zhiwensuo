@@ -1,0 +1,1 @@
+"pwr.c" LARGE OPTIMIZE (7,SPEED) BROWSE INCDIR(..\ДњТы;.\oled) DEBUG OBJECTEXTEND PRINT(.\Listings\pwr.lst) TABS (2) OBJECT(.\Objects\pwr.obj)

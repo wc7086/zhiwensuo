@@ -1,5 +1,5 @@
 #include "key.h"
-
+extern void beep_work(u8 cnt,u16 time);
 u8 Key_Scan()
 {
 	static u8 key_up,key_num;		//À… ÷ºÏ≤‚
@@ -14,6 +14,7 @@ u8 Key_Scan()
 			key_num = 2;
 		else if(key3==0)
 			key_num = 3;
+		beep_work(1,100);
 	}
 	else if((key1==1)&&(key2==1)&&(key3==1))
 	{
