@@ -1,0 +1,69 @@
+C51 COMPILER V9.57.0.0   PWR                                                               07/07/2021 19:56:52 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE PWR
+OBJECT MODULE PLACED IN .\Objects\pwr.obj
+COMPILER INVOKED BY: D:\software\keil5\C51\BIN\C51.EXE pwr.c LARGE OPTIMIZE(7,SPEED) BROWSE INCDIR(..\代码;.\oled) DEBUG
+                    - OBJECTEXTEND PRINT(.\Listings\pwr.lst) TABS(2) OBJECT(.\Objects\pwr.obj)
+
+line level    source
+
+   1          #include "pwr.h"
+   2          /*
+   3          ADC相关
+   4          */
+   5          #define ADC_POWER   0x80            //ADC电源控制位
+   6          #define ADC_SPEEDLL 0x00            //540个时钟
+   7          #define ADC_FLAG    0x10            //ADC完成标志
+   8          #define ADC_START   0x08            //ADC起始控制位
+   9          /*----------------------------
+  10          软件延时
+  11          ----------------------------*/
+  12          void Delay(u8 n)
+  13          {
+  14   1          u8 x;
+  15   1      
+  16   1          while (n--)
+  17   1          {
+  18   2              x = 5000;
+  19   2              while (x--);
+  20   2          }
+  21   1      }
+  22          /*----------------------------
+  23          读取输入电源电压
+  24          ----------------------------*/
+  25          u8 Pwr_Get()  //8位ADC模式
+  26          {
+  27   1        P1ASF = 0x00;                   //不设置P1口为模拟口,则ch0测量第9通道，内部基准电压
+  28   1        ADC_RES = 0;                    //清除结果寄存器
+  29   1        ADC_CONTR = ADC_POWER | ADC_SPEEDLL;
+  30   1        Delay(2);                       //ADC上电并延时
+  31   1        ADC_CONTR = ADC_POWER | ADC_SPEEDLL | 0 | ADC_START;
+  32   1        _nop_();                        //等待4个NOP
+  33   1        _nop_();
+  34   1        _nop_();
+  35   1        _nop_();
+  36   1        while (!(ADC_CONTR & ADC_FLAG));//等待ADC转换完成
+  37   1        ADC_CONTR &= ~ADC_FLAG;         //Close ADC  //ADC_FLAG=1;
+  38   1        
+  39   1        
+  40   1        ADC_CONTR &= 0X7F;              //ADC_POWER=0，关闭ADC电源降低功耗
+  41   1        
+  42   1        return ADC_RES;                 //返回ADC结果
+  43   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     53    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.57.0.0   PWR                                                               07/07/2021 19:56:52 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

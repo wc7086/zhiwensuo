@@ -1,0 +1,118 @@
+C51 COMPILER V9.57.0.0   SERVO                                                             07/07/2021 19:56:53 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE SERVO
+OBJECT MODULE PLACED IN .\Objects\servo.obj
+COMPILER INVOKED BY: D:\software\keil5\C51\BIN\C51.EXE servo.c LARGE OPTIMIZE(7,SPEED) BROWSE INCDIR(..\代码;.\oled) DEB
+                    -UG OBJECTEXTEND PRINT(.\Listings\servo.lst) TABS(2) OBJECT(.\Objects\servo.obj)
+
+line level    source
+
+   1          #include "servo.h"
+   2          void Delay17800us()   //@11.0592MHz
+   3          {
+   4   1        unsigned char i, j, k;
+   5   1      
+   6   1        i = 1;
+   7   1        j = 192;
+   8   1        k = 121;
+   9   1        do
+  10   1        {
+  11   2          do
+  12   2          {
+  13   3            while (--k);
+  14   3          } while (--j);
+  15   2        } while (--i);
+  16   1      }
+  17          
+  18          void Delay2200us()    //@11.0592MHz
+  19          {
+  20   1        unsigned char i, j;
+  21   1      
+  22   1        _nop_();
+  23   1        _nop_();
+  24   1        i = 24;
+  25   1        j = 167;
+  26   1        do
+  27   1        {
+  28   2          while (--j);
+  29   2        } while (--i);
+  30   1      }
+  31          void Delay800us()   //@11.0592MHz
+  32          {
+  33   1        unsigned char i, j;
+  34   1      
+  35   1        _nop_();
+  36   1        _nop_();
+  37   1        _nop_();
+  38   1        i = 9;
+  39   1        j = 151;
+  40   1        do
+  41   1        {
+  42   2          while (--j);
+  43   2        } while (--i);
+  44   1      }
+  45          void Delay19200us()   //@11.0592MHz
+  46          {
+  47   1        unsigned char i, j, k;
+  48   1      
+  49   1        _nop_();
+  50   1        _nop_();
+  51   1        _nop_();
+  52   1        i = 1;
+  53   1        j = 207;
+  54   1        k = 136;
+C51 COMPILER V9.57.0.0   SERVO                                                             07/07/2021 19:56:53 PAGE 2   
+
+  55   1        do
+  56   1        {
+  57   2          do
+  58   2          {
+  59   3            while (--k);
+  60   3          } while (--j);
+  61   2        } while (--i);
+  62   1      }
+  63          
+  64          /*----------------------------
+  65          舵机开门，延时时间
+  66          ----------------------------*/
+  67          void Door_Open(u16 ntime)
+  68          {
+  69   1        u16 i;
+  70   1        servo_pwr=0;
+  71   1        for(i=0;i<ntime;i++)
+  72   1        {
+  73   2          servo=0;
+  74   2          Delay19200us();
+  75   2          servo=1;
+  76   2          Delay800us();
+  77   2        }
+  78   1        
+  79   1        delay_ms(ntime*20);
+  80   1        
+  81   1        for(i=0;i<ntime;i++)
+  82   1        {
+  83   2          servo=0;
+  84   2          Delay17800us();
+  85   2          servo=1;
+  86   2          Delay2200us();
+  87   2        }
+  88   1        servo_pwr=1;      //关闭舵机电源
+  89   1      }
+  90          
+  91            
+  92            
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    149    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

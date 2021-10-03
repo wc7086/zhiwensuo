@@ -1,0 +1,11 @@
+".\Objects\main.obj",
+".\Objects\delay.obj",
+".\Objects\uart.obj",
+".\Objects\as608.obj",
+".\Objects\key.obj",
+".\Objects\oled.obj",
+".\Objects\pwr.obj",
+".\Objects\servo.obj",
+".\Objects\eeprom.obj" 
+TO ".\Objects\finger" 
+PRINT(".\Listings\finger.m51") RAMSIZE(256) 

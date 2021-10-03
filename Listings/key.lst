@@ -1,0 +1,48 @@
+C51 COMPILER V9.57.0.0   KEY                                                               07/07/2021 19:56:52 PAGE 1   
+
+
+C51 COMPILER V9.57.0.0, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: D:\software\keil5\C51\BIN\C51.EXE key.c LARGE OPTIMIZE(7,SPEED) BROWSE INCDIR(..\代码;.\oled) DEBUG
+                    - OBJECTEXTEND PRINT(.\Listings\key.lst) TABS(2) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "key.h"
+   2          
+   3          u8 Key_Scan()
+   4          {
+   5   1        static u8 key_up,key_num;   //松手检测
+   6   1        key_num=0;
+   7   1        if(((key1==0)||(key2==0)||(key3==0))&&(key_up==1) )
+   8   1        {
+   9   2          key_up=0;
+  10   2          delay_ms(10);   //软件消抖
+  11   2          if(key1==0)
+  12   2            key_num = 1;
+  13   2          else if(key2==0)
+  14   2            key_num = 2;
+  15   2          else if(key3==0)
+  16   2            key_num = 3;
+  17   2        }
+  18   1        else if((key1==1)&&(key2==1)&&(key3==1))
+  19   1        {
+  20   2          key_up=1;
+  21   2        }
+  22   1        return key_num;
+  23   1      }
+  24          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     83    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
